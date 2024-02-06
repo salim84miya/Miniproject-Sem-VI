@@ -92,6 +92,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         )
         mMap.moveCamera(CameraUpdateFactory.newLatLng(custom_3))
 
+
+
         val custom_4 = LatLng(latitude, longitude)
         mMap.addMarker(
             MarkerOptions().position(custom_4).title(address)
@@ -109,15 +111,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Zoom to the bounds
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 150))
-
-        mMap.setOnMarkerClickListener { marker ->
-            val markerLat = marker.position.latitude
-            val markerLng = marker.position.longitude
-            val distance = calculateDistance(latitude, longitude, markerLat, markerLng)
-            marker.showInfoWindow()
-            marker.snippet = "Distance: $distance"
-            true
-        }
     }
 
     private fun bitMapDesscriptor(context: Context, vectorResId: Int): BitmapDescriptor {
@@ -167,38 +160,5 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
-
-    fun calculateDistance(currentLat: Double, currentLng: Double, markerLat: Double, markerLng: Double): String {
-       val origin = "$currentLat,$currentLng"
-       val  destination = "$markerLat,$markerLng"
-
-        val calculateDistanceTask = CalculateDistanceTask(origin,destination)
-        calculateDistanceTask.execute()
-
-        return calculateDistanceTask.get() // Wait for the task to finish and return the result
-    }
-
-    class CalculateDistanceTask(private val origin: String, private val destination: String) : AsyncTask<Void, Void, String>() {
-        override fun doInBackground(vararg params: Void?): String {
-            val url = "https://maps.googleapis.com/maps/api/distancematrix/json?&destinations=$destination&origins=$origin&units=metric&key=AIzaSyDqGzhMJKBFBQCP4ERk_MfLRkMVQAqucbs"
-            val response = OkHttpClient().newCall(Request.Builder().url(url).build()).execute()
-
-            // Log the response body to inspect its structure
-            Log.d("MapsActivity", "API Response: ${response.body?.string()}")
-
-            val data = Gson().fromJson(response.body?.string(), DistanceMatrixResponse::class.java)
-
-            // Check for empty arrays before accessing elements
-            if (data.rows.isNotEmpty() && data.rows[0].elements.isNotEmpty()) {
-                val distance = data.rows[0].elements[0].distance.value
-                return String.format("%.2f km", distance / 1000)
-            } else {
-                // Handle the case where the API response doesn't contain expected data
-                Log.e("MapsActivity", "Error: Empty distance data in API response")
-                return "Distance calculation failed" // Or return a more appropriate error message
-            }
-        }
-    }
-
 
 }
